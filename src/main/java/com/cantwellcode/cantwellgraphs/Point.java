@@ -10,11 +10,6 @@ public class Point {
     public float x;
     public float y;
 
-    public float dx;
-    public float dy;
-
-    public Point() {}
-
     public Point(int dataIndex, float x, float y) {
         this.dataIndex = dataIndex;
         this.x = x;

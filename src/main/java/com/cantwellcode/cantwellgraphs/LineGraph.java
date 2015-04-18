@@ -9,6 +9,7 @@ import android.graphics.Path;
 import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -70,12 +71,7 @@ public class LineGraph extends View {
         for (LineItem lineItem : mLineItems) {
 
             lineItem.update(mWidth, mHeight, maxY);
-            if (lineItem.hasFill()) {
-                // If the line has a fill, draw the fill
-                canvas.drawPath(lineItem.getFillPath(), lineItem.getFillPaint());
-            }
-            // Draw Line
-            canvas.drawPath(lineItem.getLinePath(), lineItem.getLinePaint());
+            lineItem.draw(canvas);
 
             Log.d(LOG, "draw lineItem");
         }
@@ -94,12 +90,58 @@ public class LineGraph extends View {
         Log.d(LOG, "Width: " + mWidth + " Height: " + mHeight);
     }
 
-    public int getGraphWidth() {
-        return mWidth;
+
+    private Point findDataPoint(float x, float y) {
+
+        List<Point> closePoints = new ArrayList<>();
+        for (LineItem lineItem : mLineItems) {
+            closePoints.add(lineItem.findDataPoint(x, y));
+        }
+
+        float shortestDistance = Float.NaN;
+        Point closest = null;
+
+        for (Point p : closePoints) {
+
+            float x1 = p.x;
+            float y1 = p.y;
+            float x2 = x;
+            float y2 = y;
+
+            float distance = (float) Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+
+            if (closest == null || distance < shortestDistance) {
+                shortestDistance = distance;
+                closest = p;
+            }
+        }
+
+        if (closest != null) {
+            return closest;
+        } else {
+            return null;
+        }
     }
 
-    public int getGraphHeight() {
-        return mHeight;
-    }
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        Point p = findDataPoint(event.getX(), event.getY());
+        Log.d(LOG, "onTouch");
 
+        if (p != null) {
+            Log.d(LOG, "Found Nearby Datapoint");
+            for (LineItem lineItem : mLineItems) {
+                if (lineItem.containsPoint(p)) {
+                    Log.d(LOG, "Found line that contains the point");
+                    lineItem.onTap(p);
+                    invalidate();
+                    break;
+                }
+            }
+
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

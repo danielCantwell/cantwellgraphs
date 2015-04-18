@@ -1,5 +1,6 @@
 package com.cantwellcode.cantwellgraphs;
 
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
@@ -18,10 +19,6 @@ public class LineItem {
 
     private final String LOG = "LineItem";
 
-    public enum FillType {
-        NONE, SOLID, GRADIENT
-    }
-
     private List<Float> mValues;
     private List<Point> mPoints;
     private Path mLinePath;
@@ -32,6 +29,8 @@ public class LineItem {
     private float mMaxY;
 
     private FillType mFillType;
+
+    private boolean mIsSmoothed;
 
     private Paint mLinePaint;
     private int mLineColor;
@@ -45,6 +44,9 @@ public class LineItem {
     private int mGradientEndColor;
     private final String DEFAULT_FILL_START_COLOR = "#FFFFFF";
     private final String DEFAULT_FILL_END_COLOR = "#000000";
+
+    private VerticalHighlight mVerticalHighlight;
+    private PointHighlight mPointHighlight;
 
     /**
      * Constructor
@@ -66,7 +68,8 @@ public class LineItem {
      * Set defaults values
      */
     private void init() {
-        mPoints = new ArrayList<>();
+
+        mIsSmoothed = false;
 
         mLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mLinePaint.setStyle(Paint.Style.STROKE);
@@ -75,7 +78,11 @@ public class LineItem {
         mLinePaint.setStrokeCap(Paint.Cap.ROUND);
 
         mFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
+        setSolidFillColor(Color.parseColor(DEFAULT_FILL_END_COLOR));
+        setGradientFillColor(Color.parseColor(DEFAULT_FILL_START_COLOR), Color.parseColor(DEFAULT_FILL_END_COLOR));
 
+        mVerticalHighlight = null;
+        mPointHighlight = null;
     }
 
     /**
@@ -89,6 +96,7 @@ public class LineItem {
         float dx = mWidth / (maxX - 1);
         float currentX = 0;
 
+        mPoints = new ArrayList<>();
         // Add the first point at x coordinate 0
         mPoints.add(new Point(0, currentX, mHeight - (mValues.get(0) * yRatio)));
         // Loop through and add the rest of the points
@@ -103,6 +111,22 @@ public class LineItem {
      * Calculate the line path based on the coordinates
      */
     public void createLinePath() {
+        Path path = new Path();
+
+        boolean firstItem = true;
+        for (Point p : mPoints) {
+            if (firstItem) {
+                path.moveTo(p.x, p.y);
+                firstItem = false;
+            } else {
+                path.lineTo(p.x, p.y);
+            }
+        }
+
+        mLinePath = path;
+    }
+
+    public void createSmoothLinePath() {
         Path path = new Path();
 
         Point prevPoint = null;
@@ -129,6 +153,18 @@ public class LineItem {
     }
 
     public void createFillPath() {
+        Path path = new Path();
+
+        path.moveTo(0, mHeight);
+        for (Point p : mPoints) {
+            path.lineTo(p.x, p.y);
+        }
+        path.lineTo(mWidth, mHeight);
+
+        mFillPath = path;
+    }
+
+    public void createSmoothFillPath() {
         Path path = new Path();
 
         Point prevPoint = null;
@@ -166,13 +202,26 @@ public class LineItem {
         }
 
         createPoints();
-        createLinePath();
-        if (hasFill()) createFillPath();
+
+        if (mIsSmoothed) {
+            createSmoothLinePath();
+            if (hasFill())
+                createSmoothFillPath();
+        }
+        else {
+            createLinePath();
+            if (hasFill())
+                createFillPath();
+        }
     }
 
     /****************************************
                 Setter Functions
      ****************************************/
+
+    public void setSmoothed(boolean isSmoothed) {
+        mIsSmoothed = isSmoothed;
+    }
 
     public void setLineColor(int color) {
         mLineColor = color;
@@ -194,32 +243,35 @@ public class LineItem {
         mGradientEndColor = endColor;
     }
 
+    public void attachVerticalHighlight(VerticalHighlight v) {
+        mVerticalHighlight = v;
+    }
+
+    public void attachPointHighlight(PointHighlight p) {
+        mPointHighlight = p;
+    }
+
     /****************************************
                 Getter Functions
      ****************************************/
 
-    public Path getLinePath() {
-        return mLinePath;
-    }
+    public void draw(Canvas canvas) {
+        if (hasFill()) {
+            // If the line has a fill, draw the fill
+            canvas.drawPath(mFillPath, mFillPaint);
+        }
+        // Draw Line
+        canvas.drawPath(mLinePath, mLinePaint);
 
-    public Path getFillPath() {
-        return mFillPath;
-    }
+        // Draw Vertical Highlight if exists
+        if (mVerticalHighlight != null) {
+            mVerticalHighlight.draw(canvas);
+        }
 
-    public Paint getLinePaint() {
-        return mLinePaint;
-    }
-
-    public Paint getFillPaint() {
-        return mFillPaint;
-    }
-
-    public List<Float> getValues() {
-        return mValues;
-    }
-
-    public List<Point> getPoints() {
-        return mPoints;
+        // Draw Point Highlight if exists
+        if (mPointHighlight != null) {
+            mPointHighlight.draw(canvas);
+        }
     }
 
     public boolean hasFill() {
@@ -230,7 +282,43 @@ public class LineItem {
         return Collections.max(mValues);
     }
 
-    public float getMinValue() {
-        return Collections.min(mValues);
+    public boolean containsPoint(Point p) {
+        return mPoints.contains(p);
+    }
+
+    public Point findDataPoint(float x, float y) {
+        float shortestDistance = Float.NaN;
+        Point closest = null;
+
+        for (Point p : mPoints) {
+
+            float x1 = p.x;
+            float y1 = p.y;
+            float x2 = x;
+            float y2 = y;
+
+            float distance = (float) Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+
+            if (closest == null || distance < shortestDistance) {
+                shortestDistance = distance;
+                closest = p;
+            }
+        }
+
+        if (closest != null) {
+            return closest;
+        } else {
+            return null;
+        }
+    }
+
+    public void onTap(Point p) {
+        if (mVerticalHighlight != null) {
+            mVerticalHighlight.update(mHeight, p);
+        }
+
+        if (mPointHighlight != null) {
+            mPointHighlight.update(p);
+        }
     }
 }
