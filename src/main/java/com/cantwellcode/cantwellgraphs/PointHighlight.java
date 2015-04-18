@@ -33,7 +33,7 @@ public class PointHighlight {
         mHasStroke = hasStroke;
         mShowValue = showValue;
 
-        setRadius(15);
+        setRadius(30);
 
         mStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mStrokePaint.setStyle(Paint.Style.STROKE);

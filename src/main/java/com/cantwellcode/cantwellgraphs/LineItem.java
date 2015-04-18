@@ -313,6 +313,26 @@ public class LineItem {
         }
     }
 
+    public Point findDataPointX(float x) {
+        float shortestDistance = Float.NaN;
+        Point closest = null;
+
+        for (Point p : mPoints) {
+
+            float distance = Math.abs(x - p.x);
+            if (closest == null || distance < shortestDistance) {
+                shortestDistance = distance;
+                closest = p;
+            }
+        }
+
+        if (closest != null) {
+            return closest;
+        } else {
+            return null;
+        }
+    }
+
     public void onTap(Point p) {
         if (mVerticalHighlight != null) {
             mVerticalHighlight.update(mHeight, p);
