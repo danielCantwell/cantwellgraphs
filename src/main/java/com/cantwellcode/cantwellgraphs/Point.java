@@ -5,13 +5,12 @@ package com.cantwellcode.cantwellgraphs;
  */
 public class Point {
 
-    public int dataIndex;
-
+    public float value;
     public float x;
     public float y;
 
-    public Point(int dataIndex, float x, float y) {
-        this.dataIndex = dataIndex;
+    public Point(float value, float x, float y) {
+        this.value = value;
         this.x = x;
         this.y = y;
     }

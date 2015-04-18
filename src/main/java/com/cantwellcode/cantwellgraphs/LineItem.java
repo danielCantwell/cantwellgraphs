@@ -102,7 +102,8 @@ public class LineItem {
         // Loop through and add the rest of the points
         for (int i =  1; i < maxX; i++) {
             currentX += dx;
-            mPoints.add(new Point(i, currentX, mHeight - (mValues.get(i) * yRatio)));
+            float value = mValues.get(i);
+            mPoints.add(new Point(value, currentX, mHeight - (value * yRatio)));
             Log.d(LOG, "X: " + mPoints.get(i).x + " Y: " + mPoints.get(i).y);
         }
     }

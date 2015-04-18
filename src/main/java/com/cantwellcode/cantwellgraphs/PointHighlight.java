@@ -14,11 +14,13 @@ public class PointHighlight {
 
     private Paint mFillPaint;
     private Paint mStrokePaint;
+    private Paint mTextPaint;
 
     private float mRadius;
 
     private boolean mHasFill;
     private boolean mHasStroke;
+    private boolean mShowValue;
 
     private Point mPoint;
 
@@ -26,9 +28,10 @@ public class PointHighlight {
             Initialization
      ****************************************/
 
-    public PointHighlight(boolean hasFill, boolean hasStroke) {
+    public PointHighlight(boolean hasFill, boolean hasStroke, boolean showValue) {
         mHasFill = hasFill;
         mHasStroke = hasStroke;
+        mShowValue = showValue;
 
         setRadius(15);
 
@@ -40,6 +43,11 @@ public class PointHighlight {
 
         mFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
         setFillColor(Color.parseColor("#ddFFFFFF"));
+
+        mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mTextPaint.setTextAlign(Paint.Align.CENTER);
+        setTextColor(Color.BLACK);
+        setTextSize(20);
     }
 
     public void update(Point point) {
@@ -62,6 +70,14 @@ public class PointHighlight {
         mStrokePaint.setColor(color);
     }
 
+    public void setTextColor(int color) {
+        mTextPaint.setColor(color);
+    }
+
+    public void setTextSize(float size) {
+        mTextPaint.setTextSize(size);
+    }
+
     public void setStrokeWidth(float width) {
         mStrokePaint.setStrokeWidth(width);
     }
@@ -76,6 +92,15 @@ public class PointHighlight {
                 canvas.drawOval(mRect, mFillPaint);
             if (mHasStroke)
                 canvas.drawCircle(mPoint.x, mPoint.y, mRadius, mStrokePaint);
+            if (mShowValue) {
+                float x = mPoint.x;
+                float y = mPoint.y - ((mTextPaint.descent() + mTextPaint.ascent()) / 2);
+                canvas.drawText(getValue(), x, y, mTextPaint);
+            }
         }
+    }
+
+    private String getValue() {
+        return String.valueOf(mPoint.value);
     }
 }
