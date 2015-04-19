@@ -24,6 +24,8 @@ public class PointHighlight {
 
     private Point mPoint;
 
+    private ValueDisplay mValueDisplay;
+
     /****************************************
             Initialization
      ****************************************/
@@ -48,6 +50,8 @@ public class PointHighlight {
         mTextPaint.setTextAlign(Paint.Align.CENTER);
         setTextColor(Color.BLACK);
         setTextSize(20);
+
+        mValueDisplay = null;
     }
 
     public void update(Point point) {
@@ -86,6 +90,8 @@ public class PointHighlight {
         mRadius = radius;
     }
 
+    public void addCustomValueDisplay(ValueDisplay vs) { mValueDisplay = vs; }
+
     public void draw(Canvas canvas) {
         if (mPoint != null) {
             if (mHasFill)
@@ -95,12 +101,20 @@ public class PointHighlight {
             if (mShowValue) {
                 float x = mPoint.x;
                 float y = mPoint.y - ((mTextPaint.descent() + mTextPaint.ascent()) / 2);
-                canvas.drawText(getValue(), x, y, mTextPaint);
+                if (mValueDisplay == null) {
+                    canvas.drawText(getValue(), x, y, mTextPaint);
+                } else {
+                    canvas.drawText(mValueDisplay.setHighlightValue(mPoint), x, y, mTextPaint);
+                }
             }
         }
     }
 
     private String getValue() {
         return String.valueOf(mPoint.value);
+    }
+
+    public interface ValueDisplay {
+        String setHighlightValue(Point p);
     }
 }

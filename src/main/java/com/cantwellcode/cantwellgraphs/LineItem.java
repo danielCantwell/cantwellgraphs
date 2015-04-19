@@ -27,6 +27,7 @@ public class LineItem {
     private int mWidth;
     private int mHeight;
     private float mMaxY;
+    private float mMinY;
 
     private FillType mFillType;
 
@@ -48,9 +49,13 @@ public class LineItem {
     private VerticalHighlight mVerticalHighlight;
     private PointHighlight mPointHighlight;
 
+    private boolean mTopPaddingEnabled;
+    private boolean mBottomPaddingEnabled;
+
     /**
      * Constructor
-     * @param values - list of datapoints
+     *
+     * @param values   - list of datapoints
      * @param fillType - fill type for below the line : none, solid, gradient
      */
     public LineItem(List<Float> values, FillType fillType) {
@@ -61,7 +66,7 @@ public class LineItem {
     }
 
     /****************************************
-                Initialization
+     Initialization
      ****************************************/
 
     /**
@@ -77,12 +82,15 @@ public class LineItem {
         setLineWidth(DEFAULT_LINE_WIDTH);
         mLinePaint.setStrokeCap(Paint.Cap.ROUND);
 
-        mFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
+        mFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
         setSolidFillColor(Color.parseColor(DEFAULT_FILL_END_COLOR));
         setGradientFillColor(Color.parseColor(DEFAULT_FILL_START_COLOR), Color.parseColor(DEFAULT_FILL_END_COLOR));
 
         mVerticalHighlight = null;
         mPointHighlight = null;
+
+        mTopPaddingEnabled = true;
+        mBottomPaddingEnabled = true;
     }
 
     /**
@@ -92,19 +100,31 @@ public class LineItem {
         float maxX = mValues.size();
 
         // ratio used for normalizing the coordinates to the graph space
-        float yRatio = (mHeight * 9 / 10) / mMaxY;
+        float maxYCoordinate = mTopPaddingEnabled ? mHeight * 9 / 10 : mHeight;
+        float minYCoordinate = mBottomPaddingEnabled ? mHeight / 10 : 0;
         float dx = mWidth / (maxX - 1);
         float currentX = 0;
 
         mPoints = new ArrayList<>();
         // Add the first point at x coordinate 0
-        mPoints.add(new Point(0, currentX, mHeight - (mValues.get(0) * yRatio)));
+        mPoints.add(new Point(this, 0, mValues.get(0), currentX, getYCoordinate(mValues.get(0), minYCoordinate, maxYCoordinate)));
         // Loop through and add the rest of the points
-        for (int i =  1; i < maxX; i++) {
+        for (int i = 1; i < maxX; i++) {
             currentX += dx;
             float value = mValues.get(i);
-            mPoints.add(new Point(value, currentX, mHeight - (value * yRatio)));
+            float y = getYCoordinate(value, minYCoordinate, maxYCoordinate);
+            mPoints.add(new Point(this, i, value, currentX, y));
             Log.d(LOG, "X: " + mPoints.get(i).x + " Y: " + mPoints.get(i).y);
+        }
+    }
+
+    private float getYCoordinate(float value, float minYCoord, float maxYCoord) {
+        if (value == mMinY) {
+            return mHeight - minYCoord;
+        } else if (value == mMaxY) {
+            return mHeight - maxYCoord;
+        } else {
+            return mHeight - (minYCoord + ((value - mMinY) * (maxYCoord - minYCoord) / (mMaxY - mMinY)));
         }
     }
 
@@ -193,9 +213,10 @@ public class LineItem {
         mFillPath = path;
     }
 
-    public void update(int width, int height, float maxY) {
+    public void update(int width, int height, float minY, float maxY) {
         mWidth = width;
         mHeight = height;
+        mMinY = minY;
         mMaxY = maxY;
 
         if (mFillType == FillType.GRADIENT) {
@@ -208,17 +229,18 @@ public class LineItem {
             createSmoothLinePath();
             if (hasFill())
                 createSmoothFillPath();
-        }
-        else {
+        } else {
             createLinePath();
             if (hasFill())
                 createFillPath();
         }
     }
 
-    /****************************************
-                Setter Functions
-     ****************************************/
+    /**
+     * *************************************
+     * Setter Functions
+     * **************************************
+     */
 
     public void setSmoothed(boolean isSmoothed) {
         mIsSmoothed = isSmoothed;
@@ -244,6 +266,14 @@ public class LineItem {
         mGradientEndColor = endColor;
     }
 
+    public void setTopPaddingEnabled(boolean enabled) {
+        mTopPaddingEnabled = enabled;
+    }
+
+    public void setBottomPaddingEnabled(boolean enabled) {
+        mBottomPaddingEnabled = enabled;
+    }
+
     public void attachVerticalHighlight(VerticalHighlight v) {
         mVerticalHighlight = v;
     }
@@ -252,9 +282,11 @@ public class LineItem {
         mPointHighlight = p;
     }
 
-    /****************************************
-                Getter Functions
-     ****************************************/
+    /**
+     * *************************************
+     * Getter Functions
+     * **************************************
+     */
 
     public void draw(Canvas canvas) {
         if (hasFill()) {
@@ -279,8 +311,17 @@ public class LineItem {
         return mFillType != FillType.NONE;
     }
 
+    public List<Float> getValues() {
+        return mValues;
+    }
+
     public float getMaxValue() {
         return Collections.max(mValues);
+    }
+
+    public float getMinValue() {
+        Log.d(LOG, "minY: " + Collections.min(mValues));
+        return Collections.min(mValues);
     }
 
     public boolean containsPoint(Point p) {
@@ -298,7 +339,7 @@ public class LineItem {
             float x2 = x;
             float y2 = y;
 
-            float distance = (float) Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+            float distance = (float) Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 
             if (closest == null || distance < shortestDistance) {
                 shortestDistance = distance;
