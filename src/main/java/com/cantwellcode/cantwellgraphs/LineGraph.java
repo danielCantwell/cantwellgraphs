@@ -35,6 +35,12 @@ public class LineGraph extends View {
     private boolean mTopPadding;
     private boolean mBottomPadding;
 
+    private boolean mCustomBaseValue;
+    private float mBaseValue;
+
+    private boolean mCustomTopValue;
+    private float mTopValue;
+
     public LineGraph(Context context, AttributeSet attrs) {
         super(context, attrs);
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
@@ -48,6 +54,9 @@ public class LineGraph extends View {
 
         mTopPadding = true;
         mBottomPadding = true;
+
+        mCustomBaseValue = false;
+        mCustomTopValue = false;
     }
 
     public void addLineItem(LineItem lineItem) {
@@ -72,6 +81,16 @@ public class LineGraph extends View {
         mBottomPadding = false;
     }
 
+    public void setYBaseValue(float base) {
+        mCustomBaseValue = true;
+        mBaseValue = base;
+    }
+
+    public void setYTopValue(float top) {
+        mCustomTopValue = true;
+        mTopValue = top;
+    }
+
     public void drawGraph() {
         invalidate();
         Log.d(LOG, "drawGraph");
@@ -86,20 +105,58 @@ public class LineGraph extends View {
         float minY = Float.MAX_VALUE;
         float maxY = 0;
 
-        for (LineItem lineItem : mLineItems) {
-            float min = lineItem.getMinValue();
-            float max = lineItem.getMaxValue();
 
-            Log.d(LOG, "min is " + min);
-            Log.d(LOG, "max is " + max);
+        // If there is neither a customer base nor top value
+        // Then only need to loop through once, finding both min and max values
+        if (!mCustomBaseValue && !mCustomTopValue) {
+            for (LineItem lineItem : mLineItems) {
+                float min = lineItem.getMinValue();
+                float max = lineItem.getMaxValue();
 
-            if (min < minY) {
-                minY = min;
-                Log.d(LOG, "minY set to " + minY);
+                Log.d(LOG, "min is " + min);
+                Log.d(LOG, "max is " + max);
+
+                if (min < minY) {
+                    minY = min;
+                    Log.d(LOG, "minY set to " + minY);
+                }
+                if (max > maxY) {
+                    maxY = max;
+                    Log.d(LOG, "maxY set to " + maxY);
+                }
             }
-            if (max > maxY) {
-                maxY = max;
-                Log.d(LOG, "maxY set to " + maxY);
+        } else {
+
+            // Check for base value
+            if (mCustomBaseValue) {
+                minY = mBaseValue;
+            } else {
+                for (LineItem lineItem : mLineItems) {
+                    float min = lineItem.getMinValue();
+
+                    Log.d(LOG, "min is " + min);
+
+                    if (min < minY) {
+                        minY = min;
+                        Log.d(LOG, "minY set to " + minY);
+                    }
+                }
+            }
+
+            // Check for top value
+            if (mCustomTopValue) {
+                maxY = mTopValue;
+            } else {
+                for (LineItem lineItem : mLineItems) {
+                    float max = lineItem.getMaxValue();
+
+                    Log.d(LOG, "max is " + max);
+
+                    if (max > maxY) {
+                        maxY = max;
+                        Log.d(LOG, "maxY set to " + maxY);
+                    }
+                }
             }
         }
 
