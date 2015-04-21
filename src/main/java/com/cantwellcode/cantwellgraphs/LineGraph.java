@@ -41,9 +41,22 @@ public class LineGraph extends View {
     private boolean mCustomTopValue;
     private float mTopValue;
 
+    public LineGraph(Context context) {
+        super(context);
+        init();
+    }
+
     public LineGraph(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        init();
+    }
+
+    public LineGraph(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    private void init() {
 
         mLineItems = new ArrayList<>();
         mBackgroundColor = Color.parseColor("#FFFFFF");

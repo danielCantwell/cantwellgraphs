@@ -66,7 +66,7 @@ public class LineItem {
     }
 
     /****************************************
-     Initialization
+        Initialization
      ****************************************/
 
     /**
