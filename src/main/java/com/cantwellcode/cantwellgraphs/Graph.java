@@ -19,11 +19,11 @@ import java.util.List;
 /**
  * Created by danielCantwell on 4/17/15.
  */
-public class LineGraph extends View {
+public class Graph extends View {
 
-    private final String LOG = "LineGraph";
+    private final String LOG = "Graph";
 
-    private List<LineItem> mLineItems;
+    private List<GraphItem> mGraphItems;
 
     private int mWidth;
     private int mHeight;
@@ -41,24 +41,26 @@ public class LineGraph extends View {
     private boolean mCustomTopValue;
     private float mTopValue;
 
-    public LineGraph(Context context) {
+    private int mBarItemCount = 0;
+
+    public Graph(Context context) {
         super(context);
         init();
     }
 
-    public LineGraph(Context context, AttributeSet attrs) {
+    public Graph(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public LineGraph(Context context, AttributeSet attrs, int defStyleAttr) {
+    public Graph(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
     }
 
     private void init() {
 
-        mLineItems = new ArrayList<>();
+        mGraphItems = new ArrayList<>();
         mBackgroundColor = Color.parseColor("#FFFFFF");
 
         Log.d(LOG, "Constructor");
@@ -72,13 +74,19 @@ public class LineGraph extends View {
         mCustomTopValue = false;
     }
 
-    public void addLineItem(LineItem lineItem) {
-        mLineItems.add(lineItem);
+    public void addGraphItem(GraphItem graphItem) {
+        if (graphItem instanceof BarItem) {
+            ((BarItem) graphItem).setItemIndex(mBarItemCount);
+            mBarItemCount++;
+        }
+        mGraphItems.add(graphItem);
     }
 
-    public void setLineItems(List<LineItem> lineItems) {
-        mLineItems = lineItems;
+    public void addAllGraphItems(List<GraphItem> graphItems) {
+        mGraphItems.addAll(graphItems);
     }
+
+    public void removeGraphItem(GraphItem graphItem) { mGraphItems.remove(graphItem); }
 
     public void setGraphBackgroundColor(int color) {
         mBackgroundColor = color;
@@ -122,20 +130,15 @@ public class LineGraph extends View {
         // If there is neither a customer base nor top value
         // Then only need to loop through once, finding both min and max values
         if (!mCustomBaseValue && !mCustomTopValue) {
-            for (LineItem lineItem : mLineItems) {
-                float min = lineItem.getMinValue();
-                float max = lineItem.getMaxValue();
-
-                Log.d(LOG, "min is " + min);
-                Log.d(LOG, "max is " + max);
+            for (GraphItem item : mGraphItems) {
+                float min = item.getMinValue();
+                float max = item.getMaxValue();
 
                 if (min < minY) {
                     minY = min;
-                    Log.d(LOG, "minY set to " + minY);
                 }
                 if (max > maxY) {
                     maxY = max;
-                    Log.d(LOG, "maxY set to " + maxY);
                 }
             }
         } else {
@@ -144,14 +147,11 @@ public class LineGraph extends View {
             if (mCustomBaseValue) {
                 minY = mBaseValue;
             } else {
-                for (LineItem lineItem : mLineItems) {
-                    float min = lineItem.getMinValue();
-
-                    Log.d(LOG, "min is " + min);
+                for (GraphItem item : mGraphItems) {
+                    float min = item.getMinValue();
 
                     if (min < minY) {
                         minY = min;
-                        Log.d(LOG, "minY set to " + minY);
                     }
                 }
             }
@@ -160,28 +160,29 @@ public class LineGraph extends View {
             if (mCustomTopValue) {
                 maxY = mTopValue;
             } else {
-                for (LineItem lineItem : mLineItems) {
-                    float max = lineItem.getMaxValue();
-
-                    Log.d(LOG, "max is " + max);
+                for (GraphItem item : mGraphItems) {
+                    float max = item.getMaxValue();
 
                     if (max > maxY) {
                         maxY = max;
-                        Log.d(LOG, "maxY set to " + maxY);
                     }
                 }
             }
         }
 
-        for (LineItem lineItem : mLineItems) {
+        for (GraphItem item : mGraphItems) {
 
-            lineItem.setTopPaddingEnabled(mTopPadding);
-            lineItem.setBottomPaddingEnabled(mBottomPadding);
-            lineItem.update(mWidth, mHeight, minY, maxY);
-            lineItem.draw(canvas);
+            if (item instanceof BarItem) {
+                ((BarItem) item).setItemCount(mBarItemCount);
+            }
 
-            Log.d(LOG, "minY: " + minY + " maxY: " + maxY);
+            item.setTopPaddingEnabled(mTopPadding);
+            item.setBottomPaddingEnabled(mBottomPadding);
+            item.updateItem(mWidth, mHeight, minY, maxY);
+            item.drawItem(canvas);
         }
+
+        Log.d(LOG, "minY: " + minY + " maxY: " + maxY);
     }
 
     @Override
@@ -200,11 +201,20 @@ public class LineGraph extends View {
 
     private Point findDataPoint(float x, float y) {
 
-        if (mLineItems.size() == 1) {
+        int countLineItems = 0;
+        LineItem singleLineItem = null;
+        for (GraphItem item : mGraphItems) {
+            if (item instanceof LineItem) {
+                singleLineItem = (LineItem) item;
+                countLineItems++;
+            }
+        }
+
+        if (countLineItems == 1) {
             // If there is only 1 line item
             // Find the closest point based only on the x coordinate
-            if (mLineItems.get(0).findDataPointX(x) != null)
-                return mLineItems.get(0).findDataPointX(x);
+            if (singleLineItem.findDataPointX(x) != null)
+                return singleLineItem.findDataPointX(x);
             else
                 return null;
 
@@ -213,8 +223,10 @@ public class LineGraph extends View {
             // Find the closest point based on the x and y coordinate
 
             List<Point> closePoints = new ArrayList<>();
-            for (LineItem lineItem : mLineItems) {
-                closePoints.add(lineItem.findDataPoint(x, y));
+            for (GraphItem item : mGraphItems) {
+                if (item instanceof LineItem) {
+                    closePoints.add(((LineItem) item).findDataPoint(x, y));
+                }
             }
 
             float shortestDistance = Float.NaN;
@@ -247,16 +259,15 @@ public class LineGraph extends View {
     public boolean onTouchEvent(MotionEvent event) {
         if (mTouchEnabled) {
             Point p = findDataPoint(event.getX(), event.getY());
-            Log.d(LOG, "onTouch");
 
             if (p != null) {
-                Log.d(LOG, "Found Nearby Datapoint");
-                for (LineItem lineItem : mLineItems) {
-                    if (lineItem.containsPoint(p)) {
-                        Log.d(LOG, "Found line that contains the point");
-                        lineItem.onTap(p);
-                        invalidate();
-                        break;
+                for (GraphItem item : mGraphItems) {
+                    if (item instanceof LineItem) {
+                        if (((LineItem) item).containsPoint(p)) {
+                            ((LineItem) item).onTap(p);
+                            invalidate();
+                            break;
+                        }
                     }
                 }
 

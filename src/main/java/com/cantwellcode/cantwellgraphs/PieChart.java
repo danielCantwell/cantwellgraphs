@@ -34,7 +34,7 @@ public class PieChart extends View {
 
     private float mRadius;
 
-    private List<PieItem> mPieItems;
+    private List<PieSection> mPieSections;
     private float mSum;
 
     private int mBackgroundColor;
@@ -62,7 +62,7 @@ public class PieChart extends View {
     }
 
     private void init() {
-        mPieItems = new ArrayList<>();
+        mPieSections = new ArrayList<>();
         mBackgroundColor = Color.WHITE;
         mEmptyColor = Color.DKGRAY;
         mSum = 0;
@@ -82,14 +82,14 @@ public class PieChart extends View {
         return (mHeight / 2) + mPadTop;
     }
 
-    public void addPieItem(PieItem item) {
-        mPieItems.add(item);
+    public void addPieItem(PieSection item) {
+        mPieSections.add(item);
         mSum += item.getValue();
     }
 
-    public void setPieItems(List<PieItem> items) {
-        mPieItems = items;
-        for (PieItem item : items) {
+    public void setPieItems(List<PieSection> items) {
+        mPieSections = items;
+        for (PieSection item : items) {
             mSum += item.getValue();
         }
     }
@@ -124,7 +124,7 @@ public class PieChart extends View {
         } else {
 
             float startDegree = 0;
-            for (PieItem item : mPieItems) {
+            for (PieSection item : mPieSections) {
 
                 float angle = item.getValue() * 360 / mSum;
                 drawArc(canvas, item.getFillPaint(), startDegree, angle);
@@ -139,7 +139,7 @@ public class PieChart extends View {
         }
     }
 
-    private void drawLabel(Canvas canvas, PieItem item, float startDegree, float angle) {
+    private void drawLabel(Canvas canvas, PieSection item, float startDegree, float angle) {
 
         /* Find the Label Position */
 

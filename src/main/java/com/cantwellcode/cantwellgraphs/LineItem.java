@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Created by danielCantwell on 4/17/15.
  */
-public class LineItem {
+public class LineItem extends GraphItem{
 
     private final String LOG = "LineItem";
 
@@ -23,13 +23,6 @@ public class LineItem {
     private List<Point> mPoints;
     private Path mLinePath;
     private Path mFillPath;
-
-    private int mWidth;
-    private int mHeight;
-    private float mMaxY;
-    private float mMinY;
-
-    private FillType mFillType;
 
     private boolean mIsSmoothed;
 
@@ -48,9 +41,6 @@ public class LineItem {
 
     private VerticalHighlight mVerticalHighlight;
     private PointHighlight mPointHighlight;
-
-    private boolean mTopPaddingEnabled;
-    private boolean mBottomPaddingEnabled;
 
     /**
      * Constructor
@@ -72,7 +62,8 @@ public class LineItem {
     /**
      * Set defaults values
      */
-    private void init() {
+    @Override
+    protected void init() {
 
         mIsSmoothed = false;
 
@@ -93,10 +84,59 @@ public class LineItem {
         mBottomPaddingEnabled = true;
     }
 
+    @Override
+    protected void updateItem(int width, int height, float minY, float maxY) {
+        super.updateItem(width, height, minY, maxY);
+
+        if (mFillType == FillType.GRADIENT) {
+            mFillPaint.setShader(new LinearGradient(0, 0, 0, mHeight, mGradientEndColor, mGradientStartColor, Shader.TileMode.CLAMP));
+        }
+
+        createPoints();
+
+        if (mIsSmoothed) {
+            createSmoothLinePath();
+            if (hasFill())
+                createSmoothFillPath();
+        } else {
+            createLinePath();
+            if (hasFill())
+                createFillPath();
+        }
+    }
+
+    @Override
+    protected void drawItem(Canvas canvas) {
+        if (hasFill()) {
+            // If the line has a fill, draw the fill
+            canvas.drawPath(mFillPath, mFillPaint);
+        }
+        // Draw Line
+        canvas.drawPath(mLinePath, mLinePaint);
+
+        // Draw Vertical Highlight if exists
+        if (mVerticalHighlight != null) {
+            mVerticalHighlight.draw(canvas);
+        }
+
+        // Draw Point Highlight if exists
+        if (mPointHighlight != null) {
+            mPointHighlight.draw(canvas);
+        }
+    }
+
+    @Override
+    protected float getMaxValue() {
+        return Collections.max(mValues);
+    }
+
+    @Override
+    protected float getMinValue() { return Collections.min(mValues); }
+
     /**
      * Calculate the coordinates based on the values and graph size
      */
-    public void createPoints() {
+    private void createPoints() {
         float maxX = mValues.size();
 
         // ratio used for normalizing the coordinates to the graph space
@@ -131,7 +171,7 @@ public class LineItem {
     /**
      * Calculate the line path based on the coordinates
      */
-    public void createLinePath() {
+    private void createLinePath() {
         Path path = new Path();
 
         boolean firstItem = true;
@@ -147,7 +187,7 @@ public class LineItem {
         mLinePath = path;
     }
 
-    public void createSmoothLinePath() {
+    private void createSmoothLinePath() {
         Path path = new Path();
 
         Point prevPoint = null;
@@ -173,7 +213,7 @@ public class LineItem {
         mLinePath = path;
     }
 
-    public void createFillPath() {
+    private void createFillPath() {
         Path path = new Path();
 
         path.moveTo(0, mHeight);
@@ -185,7 +225,7 @@ public class LineItem {
         mFillPath = path;
     }
 
-    public void createSmoothFillPath() {
+    private void createSmoothFillPath() {
         Path path = new Path();
 
         Point prevPoint = null;
@@ -211,29 +251,6 @@ public class LineItem {
         path.lineTo(mWidth, mHeight);
 
         mFillPath = path;
-    }
-
-    public void update(int width, int height, float minY, float maxY) {
-        mWidth = width;
-        mHeight = height;
-        mMinY = minY;
-        mMaxY = maxY;
-
-        if (mFillType == FillType.GRADIENT) {
-            mFillPaint.setShader(new LinearGradient(0, 0, 0, mHeight, mGradientEndColor, mGradientStartColor, Shader.TileMode.CLAMP));
-        }
-
-        createPoints();
-
-        if (mIsSmoothed) {
-            createSmoothLinePath();
-            if (hasFill())
-                createSmoothFillPath();
-        } else {
-            createLinePath();
-            if (hasFill())
-                createFillPath();
-        }
     }
 
     /**
@@ -266,14 +283,6 @@ public class LineItem {
         mGradientEndColor = endColor;
     }
 
-    public void setTopPaddingEnabled(boolean enabled) {
-        mTopPaddingEnabled = enabled;
-    }
-
-    public void setBottomPaddingEnabled(boolean enabled) {
-        mBottomPaddingEnabled = enabled;
-    }
-
     public void attachVerticalHighlight(VerticalHighlight v) {
         mVerticalHighlight = v;
     }
@@ -288,26 +297,7 @@ public class LineItem {
      * **************************************
      */
 
-    public void draw(Canvas canvas) {
-        if (hasFill()) {
-            // If the line has a fill, draw the fill
-            canvas.drawPath(mFillPath, mFillPaint);
-        }
-        // Draw Line
-        canvas.drawPath(mLinePath, mLinePaint);
-
-        // Draw Vertical Highlight if exists
-        if (mVerticalHighlight != null) {
-            mVerticalHighlight.draw(canvas);
-        }
-
-        // Draw Point Highlight if exists
-        if (mPointHighlight != null) {
-            mPointHighlight.draw(canvas);
-        }
-    }
-
-    public boolean hasFill() {
+    protected boolean hasFill() {
         return mFillType != FillType.NONE;
     }
 
@@ -315,20 +305,11 @@ public class LineItem {
         return mValues;
     }
 
-    public float getMaxValue() {
-        return Collections.max(mValues);
-    }
-
-    public float getMinValue() {
-        Log.d(LOG, "minY: " + Collections.min(mValues));
-        return Collections.min(mValues);
-    }
-
-    public boolean containsPoint(Point p) {
+    protected boolean containsPoint(Point p) {
         return mPoints.contains(p);
     }
 
-    public Point findDataPoint(float x, float y) {
+    protected Point findDataPoint(float x, float y) {
         float shortestDistance = Float.NaN;
         Point closest = null;
 
@@ -354,7 +335,7 @@ public class LineItem {
         }
     }
 
-    public Point findDataPointX(float x) {
+    protected Point findDataPointX(float x) {
         float shortestDistance = Float.NaN;
         Point closest = null;
 
@@ -374,7 +355,7 @@ public class LineItem {
         }
     }
 
-    public void onTap(Point p) {
+    protected void onTap(Point p) {
         if (mVerticalHighlight != null) {
             mVerticalHighlight.update(mHeight, p);
         }

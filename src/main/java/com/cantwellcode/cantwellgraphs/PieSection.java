@@ -7,7 +7,7 @@ import android.graphics.Paint;
 /**
  * Created by danielCantwell on 4/20/15.
  */
-public class PieItem {
+public class PieSection {
 
     private String mName;
     private float mValue;
@@ -24,7 +24,7 @@ public class PieItem {
      * @param name or title of this section of the pie
      * @param value of this section of the pie
      */
-    public PieItem(String name, float value) {
+    public PieSection(String name, float value) {
         mName = name;
         mValue = value;
 
@@ -92,19 +92,19 @@ public class PieItem {
         return mName;
     }
 
-    public PieLabelType getLabelType() { return mLabelType; }
+    protected PieLabelType getLabelType() { return mLabelType; }
 
-    public Paint getStrokePaint() {
+    protected Paint getStrokePaint() {
         return mStrokePaint;
     }
 
-    public Paint getFillPaint() {
+    protected Paint getFillPaint() {
         return mFillPaint;
     }
 
-    public Paint getLabelPaint() { return mLabelPaint; }
+    protected Paint getLabelPaint() { return mLabelPaint; }
 
-    public boolean hasLabel() {
+    protected boolean hasLabel() {
         return mShowLabel;
     }
 }
