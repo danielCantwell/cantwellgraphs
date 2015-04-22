@@ -44,12 +44,15 @@ public class BarItem extends GraphItem {
      */
     @Override
     protected void init() {
+
+        /* Initialize the stroke paint */
         mStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mStrokePaint.setStyle(Paint.Style.STROKE);
         setStrokeColor(Color.parseColor(DEFAULT_STROKE_COLOR));
         setStrokeWidth(DEFAULT_STROKE_WIDTH);
         mStrokePaint.setStrokeCap(Paint.Cap.ROUND);
 
+        /* Initialize the fill paint */
         mFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
         setSolidFillColor(Color.parseColor(DEFAULT_FILL_END_COLOR));
         setGradientFillColor(Color.parseColor(DEFAULT_FILL_START_COLOR), Color.parseColor(DEFAULT_FILL_END_COLOR));
@@ -83,32 +86,52 @@ public class BarItem extends GraphItem {
         canvas.drawRect(mRect, mStrokePaint);
     }
 
+    /**
+     * For bar items, there is only one value, so min and max both return that value
+     * @return
+     */
     @Override
     protected float getMinValue() {
         return mValue;
     }
 
+    /**
+     * For bar items, there is only one value, so max and min both return that value
+     * @return
+     */
     @Override
     protected float getMaxValue() {
         return mValue;
     }
 
+    /**
+     * Which bar number is this in the graph
+     * @param itemIndex
+     */
     protected void setItemIndex(int itemIndex) {
         mItemIndex = itemIndex;
     }
 
+    /**
+     * How many total bars are there in the graph
+     * @param itemCount
+     */
     protected void setItemCount(int itemCount) {
         mItemCount = itemCount;
     }
 
+    /**
+     * After update is called and the needed values are known,
+     * We create the rectangle, in preparation to be drawn
+     */
     private void createRect() {
         float maxX = mItemCount;
 
         // ratio used for normalizing the coordinates to the graph space
         float maxYCoordinate = mTopPaddingEnabled ? mHeight * 9 / 10 : mHeight;
         float minYCoordinate = mBottomPaddingEnabled ? mHeight / 10 : 0;
-        float dX = mWidth / maxX;
-        float leftX = mItemIndex == 0 ? 0 : mItemIndex * dX;
+        float dX = (mWidth - mLabelWidth) / maxX;
+        float leftX = mItemIndex == 0 ? mLabelWidth : mLabelWidth + (mItemIndex * dX);
         float rightX = leftX + dX;
         float topY = getYCoordinate(mValue, minYCoordinate, maxYCoordinate);
 
@@ -117,29 +140,35 @@ public class BarItem extends GraphItem {
         mRect = new RectF(leftX, topY, rightX, mHeight);
     }
 
-    private float getYCoordinate(float value, float minYCoord, float maxYCoord) {
-        if (value == mMinY) {
-            return mHeight - minYCoord;
-        } else if (value == mMaxY) {
-            return mHeight - maxYCoord;
-        } else {
-            return mHeight - (minYCoord + ((value - mMinY) * (maxYCoord - minYCoord) / (mMaxY - mMinY)));
-        }
-    }
-
-
+    /**
+     * Set the color of the stroke for the bar
+     * @param color
+     */
     public void setStrokeColor(int color) {
         mStrokePaint.setColor(color);
     }
 
+    /**
+     * Set the width of the stroke for the bar
+     * @param width
+     */
     public void setStrokeWidth(float width) {
         mStrokePaint.setStrokeWidth(width);
     }
 
+    /**
+     * Set the inside fill color of the bar
+     * @param color
+     */
     public void setSolidFillColor(int color) {
         mFillPaint.setColor(color);
     }
 
+    /**
+     * Set the colors of the gradient for the bar
+     * @param startColor - the color at the bottom
+     * @param endColor - the color at the top
+     */
     public void setGradientFillColor(int startColor, int endColor) {
         mGradientStartColor = startColor;
         mGradientEndColor = endColor;

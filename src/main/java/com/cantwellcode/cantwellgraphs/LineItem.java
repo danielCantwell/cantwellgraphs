@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Created by danielCantwell on 4/17/15.
  */
-public class LineItem extends GraphItem{
+public class LineItem extends GraphItem {
 
     private final String LOG = "LineItem";
 
@@ -56,7 +56,7 @@ public class LineItem extends GraphItem{
     }
 
     /****************************************
-        Initialization
+     Initialization
      ****************************************/
 
     /**
@@ -65,21 +65,26 @@ public class LineItem extends GraphItem{
     @Override
     protected void init() {
 
+        // By default, there line is not smooth
         mIsSmoothed = false;
 
+        /* Initialize the line paint */
         mLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mLinePaint.setStyle(Paint.Style.STROKE);
         setLineColor(Color.parseColor(DEFAULT_LINE_COLOR));
         setLineWidth(DEFAULT_LINE_WIDTH);
         mLinePaint.setStrokeCap(Paint.Cap.ROUND);
 
+        /* Initialize the fill paint */
         mFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
         setSolidFillColor(Color.parseColor(DEFAULT_FILL_END_COLOR));
         setGradientFillColor(Color.parseColor(DEFAULT_FILL_START_COLOR), Color.parseColor(DEFAULT_FILL_END_COLOR));
 
+        // By default, there are not data highlights
         mVerticalHighlight = null;
         mPointHighlight = null;
 
+        // By default, both top and bottom padding are enabled
         mTopPaddingEnabled = true;
         mBottomPaddingEnabled = true;
     }
@@ -92,7 +97,11 @@ public class LineItem extends GraphItem{
             mFillPaint.setShader(new LinearGradient(0, 0, 0, mHeight, mGradientEndColor, mGradientStartColor, Shader.TileMode.CLAMP));
         }
 
+        /* Calculate the list of points */
+
         createPoints();
+
+        /* Create either a smooth or normal line path based on the points */
 
         if (mIsSmoothed) {
             createSmoothLinePath();
@@ -131,7 +140,9 @@ public class LineItem extends GraphItem{
     }
 
     @Override
-    protected float getMinValue() { return Collections.min(mValues); }
+    protected float getMinValue() {
+        return Collections.min(mValues);
+    }
 
     /**
      * Calculate the coordinates based on the values and graph size
@@ -158,16 +169,6 @@ public class LineItem extends GraphItem{
         }
     }
 
-    private float getYCoordinate(float value, float minYCoord, float maxYCoord) {
-        if (value == mMinY) {
-            return mHeight - minYCoord;
-        } else if (value == mMaxY) {
-            return mHeight - maxYCoord;
-        } else {
-            return mHeight - (minYCoord + ((value - mMinY) * (maxYCoord - minYCoord) / (mMaxY - mMinY)));
-        }
-    }
-
     /**
      * Calculate the line path based on the coordinates
      */
@@ -187,6 +188,9 @@ public class LineItem extends GraphItem{
         mLinePath = path;
     }
 
+    /**
+     * Calculate a smoothed line path based on the coordinates
+     */
     private void createSmoothLinePath() {
         Path path = new Path();
 
@@ -213,6 +217,10 @@ public class LineItem extends GraphItem{
         mLinePath = path;
     }
 
+    /**
+     * Calculate the fill path
+     * The difference in the line path, is that the fill's first and last points go to the bottom of the graph
+     */
     private void createFillPath() {
         Path path = new Path();
 
@@ -225,6 +233,10 @@ public class LineItem extends GraphItem{
         mFillPath = path;
     }
 
+    /**
+     * Calculate a smoothed fill path
+     * The difference in the line path, is that the fill's first and alst points go to the bottom of the graph
+     */
     private void createSmoothFillPath() {
         Path path = new Path();
 
@@ -253,62 +265,122 @@ public class LineItem extends GraphItem{
         mFillPath = path;
     }
 
-    /**
+    /*
      * *************************************
      * Setter Functions
      * **************************************
      */
 
+    /**
+     * If enabled, it will create a smooth path from point point
+     * Otherwise, the path will be a straight line from point to point
+     *
+     * @param isSmoothed
+     */
     public void setSmoothed(boolean isSmoothed) {
         mIsSmoothed = isSmoothed;
     }
 
+    /**
+     * Sets the color of the line item
+     *
+     * @param color
+     */
     public void setLineColor(int color) {
         mLineColor = color;
         mLinePaint.setColor(mLineColor);
     }
 
+    /**
+     * Sets the width of the line item
+     *
+     * @param width
+     */
     public void setLineWidth(float width) {
         mLineWidth = width;
         mLinePaint.setStrokeWidth(mLineWidth);
     }
 
+    /**
+     * Sets the solid fill color below the line item
+     *
+     * @param color
+     */
     public void setSolidFillColor(int color) {
         mFillColor = color;
         mFillPaint.setColor(mFillColor);
     }
 
+    /**
+     * Sets the gradient fill colors below the item
+     *
+     * @param startColor - the color at the bottom of the fill
+     * @param endColor   - the color at the top of the fill
+     */
     public void setGradientFillColor(int startColor, int endColor) {
         mGradientStartColor = startColor;
         mGradientEndColor = endColor;
     }
 
+    /**
+     * Add a vertical data highlight that is used with touch interaction
+     *
+     * @param v
+     */
     public void attachVerticalHighlight(VerticalHighlight v) {
         mVerticalHighlight = v;
     }
 
+    /**
+     * Adds a point data highlight that is used with touch interaction
+     *
+     * @param p
+     */
     public void attachPointHighlight(PointHighlight p) {
         mPointHighlight = p;
     }
 
-    /**
+    /*
      * *************************************
      * Getter Functions
      * **************************************
      */
 
+    /**
+     * Check if the line item has fill, as opposed to just a line
+     *
+     * @return
+     */
     protected boolean hasFill() {
         return mFillType != FillType.NONE;
     }
 
+    /**
+     * Returns the list of values for the line
+     *
+     * @return
+     */
     public List<Float> getValues() {
         return mValues;
     }
 
+    /**
+     * Check if the line contains the point
+     *
+     * @param p
+     * @return
+     */
     protected boolean containsPoint(Point p) {
         return mPoints.contains(p);
     }
 
+    /**
+     * Finds the point on the line closest the the x,y coordinate given
+     *
+     * @param x
+     * @param y
+     * @return
+     */
     protected Point findDataPoint(float x, float y) {
         float shortestDistance = Float.NaN;
         Point closest = null;
@@ -335,6 +407,12 @@ public class LineItem extends GraphItem{
         }
     }
 
+    /**
+     * Finds the points on the line that closest corresponds to the given x coordinate
+     *
+     * @param x
+     * @return
+     */
     protected Point findDataPointX(float x) {
         float shortestDistance = Float.NaN;
         Point closest = null;
@@ -355,6 +433,11 @@ public class LineItem extends GraphItem{
         }
     }
 
+    /**
+     * Handle a touch event on a given point
+     *
+     * @param p
+     */
     protected void onTap(Point p) {
         if (mVerticalHighlight != null) {
             mVerticalHighlight.update(mHeight, p);
