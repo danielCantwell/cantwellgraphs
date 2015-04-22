@@ -85,8 +85,8 @@ public class LineItem extends GraphItem{
     }
 
     @Override
-    protected void updateItem(int width, int height, float minY, float maxY) {
-        super.updateItem(width, height, minY, maxY);
+    protected void updateItem(int width, int height, float minY, float maxY, int labelWidth) {
+        super.updateItem(width, height, minY, maxY, labelWidth);
 
         if (mFillType == FillType.GRADIENT) {
             mFillPaint.setShader(new LinearGradient(0, 0, 0, mHeight, mGradientEndColor, mGradientStartColor, Shader.TileMode.CLAMP));
@@ -142,8 +142,8 @@ public class LineItem extends GraphItem{
         // ratio used for normalizing the coordinates to the graph space
         float maxYCoordinate = mTopPaddingEnabled ? mHeight * 9 / 10 : mHeight;
         float minYCoordinate = mBottomPaddingEnabled ? mHeight / 10 : 0;
-        float dx = mWidth / (maxX - 1);
-        float currentX = 0;
+        float dx = (mWidth - mLabelWidth) / (maxX - 1);
+        float currentX = mLabelWidth;
 
         mPoints = new ArrayList<>();
         // Add the first point at x coordinate 0
@@ -216,7 +216,7 @@ public class LineItem extends GraphItem{
     private void createFillPath() {
         Path path = new Path();
 
-        path.moveTo(0, mHeight);
+        path.moveTo(mLabelWidth, mHeight);
         for (Point p : mPoints) {
             path.lineTo(p.x, p.y);
         }
@@ -229,7 +229,7 @@ public class LineItem extends GraphItem{
         Path path = new Path();
 
         Point prevPoint = null;
-        path.moveTo(0, mHeight);
+        path.moveTo(mLabelWidth, mHeight);
         for (int i = 0; i < mPoints.size(); i++) {
             Point point = mPoints.get(i);
 

@@ -43,7 +43,6 @@ public class PieSection {
 
         mLabelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mLabelPaint.setTextSize(30);
-        mLabelPaint.setFakeBoldText(true);
         mLabelPaint.setColor(Color.BLACK);
         mLabelPaint.setTextAlign(Paint.Align.CENTER);
     }

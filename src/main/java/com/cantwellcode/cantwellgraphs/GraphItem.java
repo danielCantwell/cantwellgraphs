@@ -13,17 +13,20 @@ public abstract class GraphItem {
     protected float mMinY;
     protected float mMaxY;
 
+    protected float mLabelWidth;
+
     protected FillType mFillType;
 
     protected boolean mTopPaddingEnabled;
     protected boolean mBottomPaddingEnabled;
 
     protected abstract void init();
-    protected void updateItem(int width, int height, float minY, float maxY) {
+    protected void updateItem(int width, int height, float minY, float maxY, int labelWidth) {
         mWidth = width;
         mHeight = height;
         mMinY = minY;
         mMaxY = maxY;
+        mLabelWidth = labelWidth;
     }
     protected abstract void drawItem(Canvas canvas);
 

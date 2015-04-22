@@ -62,8 +62,8 @@ public class BarItem extends GraphItem {
     }
 
     @Override
-    protected void updateItem(int width, int height, float minY, float maxY) {
-        super.updateItem(width, height, minY, maxY);
+    protected void updateItem(int width, int height, float minY, float maxY, int labelWidth) {
+        super.updateItem(width, height, minY, maxY, labelWidth);
 
         if (mFillType == FillType.GRADIENT) {
             mFillPaint.setShader(new LinearGradient(0, 0, 0, mHeight, mGradientEndColor, mGradientStartColor, Shader.TileMode.CLAMP));

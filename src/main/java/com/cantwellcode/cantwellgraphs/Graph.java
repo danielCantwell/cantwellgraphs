@@ -43,6 +43,10 @@ public class Graph extends View {
 
     private int mBarItemCount = 0;
 
+    private boolean mDisplayYLabels;
+
+    private Paint mLabelPaint;
+
     public Graph(Context context) {
         super(context);
         init();
@@ -68,10 +72,16 @@ public class Graph extends View {
         mTouchEnabled = false;
 
         mTopPadding = true;
-        mBottomPadding = true;
+        mBottomPadding = false;
 
         mCustomBaseValue = false;
         mCustomTopValue = false;
+
+        mDisplayYLabels = false;
+        mLabelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mLabelPaint.setTextAlign(Paint.Align.RIGHT);
+        setLabelColor(Color.BLACK);
+        setLabelSize(30);
     }
 
     public void addGraphItem(GraphItem graphItem) {
@@ -94,12 +104,28 @@ public class Graph extends View {
 
     public void enableTouch(boolean isEnabled) { mTouchEnabled = isEnabled; }
 
-    public void removeGraphPaddingTop() {
-        mTopPadding = false;
+    public void enableGraphPaddingTop(boolean enabled) {
+        mTopPadding = enabled;
     }
 
-    public void removeGraphPaddingBottom() {
-        mBottomPadding = false;
+    public void enableGraphPaddingBottom(boolean enabled) {
+        mBottomPadding = enabled;
+    }
+
+    public void displayYLabels(boolean display) {
+        mDisplayYLabels = display;
+    }
+
+    public void setLabelColor(int color) {
+        mLabelPaint.setColor(color);
+    }
+
+    public void setLabelSize(float size) {
+        mLabelPaint.setTextSize(size);
+    }
+
+    private int getLabelWidth(String maxLabel) {
+        return (int) mLabelPaint.measureText(maxLabel + "    ");
     }
 
     public void setYBaseValue(float base) {
@@ -178,11 +204,39 @@ public class Graph extends View {
 
             item.setTopPaddingEnabled(mTopPadding);
             item.setBottomPaddingEnabled(mBottomPadding);
-            item.updateItem(mWidth, mHeight, minY, maxY);
+            item.updateItem(mWidth, mHeight, minY, maxY, mDisplayYLabels ? getLabelWidth(String.valueOf(maxY)) : 0);
             item.drawItem(canvas);
         }
 
+        if (mDisplayYLabels) drawLabels(canvas, minY, maxY, getLabelWidth(String.valueOf(maxY)));
+
         Log.d(LOG, "minY: " + minY + " maxY: " + maxY);
+    }
+
+    private void drawLabels(Canvas canvas, float minY, float maxY, int maxLabelWidth) {
+        float midValue = (minY + maxY) / 2;
+        float lowValue = (minY + maxY) / 4;
+        float highValue = (minY + maxY) * 3 / 4;
+
+        float minYCoordinate = mBottomPadding ? mHeight * 9 / 10 : mHeight - mLabelPaint.descent();
+        float maxYCoordinate = mTopPadding ? mHeight / 10 : 3 * mLabelPaint.descent();
+
+        float midYCoordinate = (minYCoordinate + maxYCoordinate) / 2;
+        float lowYCoordinate = (minYCoordinate + midYCoordinate) / 2;
+        float highYCoordinate = (maxYCoordinate + midYCoordinate) / 2;
+
+        canvas.drawText(String.format("%.1f  ", minY), maxLabelWidth, minYCoordinate, mLabelPaint);
+        canvas.drawText(String.format("%.1f  ", lowValue), maxLabelWidth, lowYCoordinate, mLabelPaint);
+        canvas.drawText(String.format("%.1f  ", midValue), maxLabelWidth, midYCoordinate, mLabelPaint);
+        canvas.drawText(String.format("%.1f  ", highValue), maxLabelWidth, highYCoordinate, mLabelPaint);
+        canvas.drawText(String.format("%.1f  ", maxY), maxLabelWidth, maxYCoordinate, mLabelPaint);
+
+        Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        linePaint.setColor(Color.BLACK);
+        linePaint.setStrokeWidth(5);
+        linePaint.setStyle(Paint.Style.STROKE);
+
+        canvas.drawLine(maxLabelWidth - 2, 0, maxLabelWidth - 2, mHeight, linePaint);
     }
 
     @Override
