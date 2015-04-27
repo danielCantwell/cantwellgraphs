@@ -13,6 +13,8 @@ import java.util.ArrayList;
 
 /**
  * Created by danielCantwell on 4/21/15.
+ *
+ * Copyright (c) Cantwell Code 2015, All Rights Reserved
  */
 public class BarItem extends GraphItem {
     private final String LOG = "BarItem";

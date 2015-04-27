@@ -4,6 +4,8 @@ import android.graphics.Canvas;
 
 /**
  * Created by danielCantwell on 4/21/15.
+ *
+ * Copyright (c) Cantwell Code 2015, All Rights Reserved
  */
 public abstract class GraphItem {
 

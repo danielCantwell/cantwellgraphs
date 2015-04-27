@@ -14,6 +14,8 @@ import java.util.List;
 
 /**
  * Created by danielCantwell on 4/17/15.
+ *
+ * Copyright (c) Cantwell Code 2015, All Rights Reserved
  */
 public class LineItem extends GraphItem {
 

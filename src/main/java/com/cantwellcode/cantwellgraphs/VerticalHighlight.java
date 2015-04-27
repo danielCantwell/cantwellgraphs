@@ -10,6 +10,8 @@ import android.graphics.Shader;
 
 /**
  * Created by danielCantwell on 4/18/15.
+ *
+ * Copyright (c) Cantwell Code 2015, All Rights Reserved
  */
 public class VerticalHighlight {
 

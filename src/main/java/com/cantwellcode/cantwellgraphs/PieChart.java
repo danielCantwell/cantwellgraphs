@@ -14,6 +14,8 @@ import java.util.List;
 
 /**
  * Created by danielCantwell on 4/20/15.
+ *
+ * Copyright (c) Cantwell Code 2015, All Rights Reserved
  */
 public class PieChart extends View {
 
@@ -82,6 +84,11 @@ public class PieChart extends View {
         return (mHeight / 2) + mPadTop;
     }
 
+    public void clearChart() {
+        mPieSections.clear();
+        mSum = 0;
+    }
+
     public void addPieItem(PieSection item) {
         mPieSections.add(item);
         mSum += item.getValue();
@@ -89,6 +96,7 @@ public class PieChart extends View {
 
     public void setPieItems(List<PieSection> items) {
         mPieSections = items;
+        mSum = 0;
         for (PieSection item : items) {
             mSum += item.getValue();
         }
@@ -126,15 +134,26 @@ public class PieChart extends View {
             float startDegree = 0;
             for (PieSection item : mPieSections) {
 
-                float angle = item.getValue() * 360 / mSum;
-                drawArc(canvas, item.getFillPaint(), startDegree, angle);
-                drawArc(canvas, item.getStrokePaint(), startDegree, angle);
+                if (item.getValue() > 0) {
 
-                if (item.hasLabel()) {
-                    drawLabel(canvas, item, startDegree, angle);
+                    float angle = item.getValue() * 360 / mSum;
+                    drawArc(canvas, item.getFillPaint(), startDegree, angle);
+                    drawArc(canvas, item.getStrokePaint(), startDegree, angle);
+
+                    startDegree += angle;
                 }
+            }
 
-                startDegree += angle;
+            for (PieSection item : mPieSections) {
+                if (item.getValue() > 0) {
+                    float angle = item.getValue() * 360 / mSum;
+
+                    if (item.hasLabel()) {
+                        drawLabel(canvas, item, startDegree, angle);
+                    }
+
+                    startDegree += angle;
+                }
             }
         }
     }
