@@ -165,10 +165,15 @@ public class PieChart extends View {
         float deg = (startDegree + startDegree + angle) / 2;
         float r = mRadius * 3 / 5;
         double radians = deg * Math.PI / 180;
-        float x = (float) (r * Math.cos(radians)) + centerX();
-        float y = (float) (r * Math.sin(radians)) + centerY() - ((item.getLabelPaint().descent() + item.getLabelPaint().ascent()) / 2);
-
-
+        float x;
+        float y;
+        if (mPieSections.size() > 1) {
+            x = (float) (r * Math.cos(radians)) + centerX();
+            y = (float) (r * Math.sin(radians)) + centerY() - ((item.getLabelPaint().descent() + item.getLabelPaint().ascent()) / 2);
+        } else {
+            x = centerX();
+            y = centerY();
+        }
 
         /* Draw the correct label at the position */
 
