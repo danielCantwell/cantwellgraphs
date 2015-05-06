@@ -18,7 +18,7 @@ You can leave it as is (black line, no fill), or you can customize it (line colo
 
 ####Line Items
 `LineItem line1 = new LineItem(valuesList, FilleType.GRADIENT)`<br>
-The line ite, constructor takes in a list of value and a fill type<br>
+The line item constructor takes in a list of value and a fill type<br>
 You can leave it as is (black line, no fill), or you can add a lot of customization<br>
 By default, it connects each data point with a straight line, but you can choose to make it a smooth curve<br>
 `line1.setSmoothed(true)`
